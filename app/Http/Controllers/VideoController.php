@@ -3,30 +3,28 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class VideoController extends Controller
 {
-    public function writeFile($name_file, $json_file)
+    public function writeFile($name_file)
     {
-        $string = file_get_contents($json_file.'.json');
+        $string = Storage::disk('public')->get($name_file.'.json');
         $json = json_decode($string, true);
         $data = $json['actions'][0]['updateEngagementPanelAction']["content"]["transcriptRenderer"]["content"]["transcriptSearchPanelRenderer"]["body"]["transcriptSegmentListRenderer"]["initialSegments"];
 
-
-        $file = $name_file.'.txt';
-        // Open the file to get existing content
-        $current = file_get_contents($file);
+        $file_temp_content = "";
         foreach($data as $value)
         {
             $temp = $value["transcriptSegmentRenderer"]["startTimeText"]["simpleText"];
             $text = str_replace("\n", "", $value["transcriptSegmentRenderer"]["snippet"]["runs"][0]["text"]);
 
             // Append a new person to the file
-            $current .= $temp."\t".$text."\n";
+            $file_temp_content .= $temp."\t".$text."\n";
         }
 
         // Write the contents back to the file
-        file_put_contents($file, $current);
+        Storage::disk('public')->put("{$name_file}.txt", $file_temp_content);
 
         return true;
     }
@@ -45,7 +43,7 @@ class VideoController extends Controller
 
         foreach ($files as $file)
         {
-            $this->writeFile($file, $file.'.json');
+            $this->writeFile($file);
         }
     }
 
