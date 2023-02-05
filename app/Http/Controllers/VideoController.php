@@ -9,11 +9,14 @@ class VideoController extends Controller
 {
     public function writeFile($name_file)
     {
-        $string = Storage::disk('public')->get($name_file.'.json');
+        $string = Storage::disk('public')->get($name_file);
         $json = json_decode($string, true);
         $data = $json['actions'][0]['updateEngagementPanelAction']["content"]["transcriptRenderer"]["content"]["transcriptSearchPanelRenderer"]["body"]["transcriptSegmentListRenderer"]["initialSegments"];
 
-        $file_temp_content = "";
+        $name = str_replace("json/", "", $name_file);
+        $name = str_replace(".json", "", $name);
+        $name = str_replace("-", " ", $name);
+        $file_temp_content = "Title Youtube : {$name}\n";
         foreach($data as $value)
         {
             $temp = $value["transcriptSegmentRenderer"]["startTimeText"]["simpleText"];
@@ -24,27 +27,20 @@ class VideoController extends Controller
         }
 
         // Write the contents back to the file
-        Storage::disk('public')->put("{$name_file}.txt", $file_temp_content);
+        Storage::disk('public')->put("export/{$name}.txt", $file_temp_content);
 
         return true;
     }
 
     public function done()
     {
-        $files =
-            [
-                'grace_in_the_mind',
-                'law_and_grace_part_1',
-                'the_human_expression_of_god',
-                'what_is_your_rank_in_the_kingdom',
-                'your_oneness_with_god',
-            ];
-
-
+        $files = Storage::disk('public')->allFiles('json');
         foreach ($files as $file)
         {
             $this->writeFile($file);
         }
+
+        return true;
     }
 
     public function JsonDataView(Request $request)
